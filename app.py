@@ -6,15 +6,7 @@ import sys
 from datetime import datetime
 import altair as alt
 
-# main.py에서 데이터 수집 함수 임포트
-try:
-    from main import main as fetch_latest_data
-except ImportError:
-    st.error("main.py 파일을 찾을 수 없습니다.")
-    fetch_latest_data = lambda: None
-import json
-import os
-
+# --- 즐겨찾기 로직 ---
 FAVORITES_FILE = "favorites.json"
 
 def load_favorites():
@@ -31,31 +23,16 @@ def save_favorites(fav_list):
         json.dump(fav_list, f, ensure_ascii=False)
 
 # 1. 페이지 기본 설정
-st.set_page_config(page_title="실거래가 대시보드", layout="wide")
+st.set_page_config(page_title="실거래가 정밀 분석기", layout="wide")
 
-# 1-1. 최신 데이터 자동 수집 기능
-@st.cache_data(ttl=86400) # 하루(86400초)에 한 번씩만 실행됨
-def auto_update_data():
-    try:
-        fetch_latest_data() # main.py의 로직 실행
-        return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    except Exception as e:
-        return f"업데이트 실패: {e}"
-
-# 앱 시작 시 자동 업데이트 함수 호출 (하루 1회 제한)
-last_update_time = auto_update_data()
-if last_update_time:
-    st.toast(f"마지막 데이터 갱신: {last_update_time}")
-
-# 2. 데이터 불러오기 및 전처리
+# 2. 데이터 불러오기 (캐싱)
 @st.cache_data
 def load_data():
     try:
+        # 데이터 수집 시 저장했던 utf-8-sig 인코딩으로 로드
         df = pd.read_csv("hwasung_apartment_data.csv", low_memory=False)
         df['거래일'] = pd.to_datetime(df['거래일'])
-        
-        # [핵심 로직] 소수점을 버리고 정수로 변환하여 '타입' 그룹을 생성합니다.
-        # 예: 59.94 -> 59타입, 84.95 -> 84타입
+        # 소수점 면적을 정수형 타입으로 그룹화 (예: 84.9 -> 84타입)
         df['전용면적_타입'] = df['전용면적'].astype(int).astype(str) + "타입"
         return df
     except FileNotFoundError:
@@ -66,124 +43,114 @@ df = load_data()
 st.title("🏢 관심 아파트 실거래가 정밀 분석기")
 
 if df.empty:
-    st.warning("데이터 파일이 없습니다. 먼저 main.py를 실행해 데이터를 수집해주세요.")
+    st.warning("데이터 파일이 없습니다. 먼저 데이터 수집(main.py)을 완료해 주세요.")
 else:
-    # 3. 왼쪽 사이드바: 즐겨찾기 및 필터 기능
+    # 3. 왼쪽 사이드바
     st.sidebar.header("🔍 즐겨찾기 및 필터")
     
-    # --- 이 두 줄을 여기에 추가합니다 ---
-    if st.sidebar.button("🔄 최신 데이터 수동 불러오기"):
-        # 버튼을 누르면 캐시를 지우고 데이터를 다시 강제로 수집합니다.
+    # 데이터 수동 갱신 버튼
+    if st.sidebar.button("🔄 데이터 수동 새로고침"):
         st.cache_data.clear()
-        with st.spinner("최신 데이터를 가져오는 중입니다... 잠시만 기다려주세요"):
-            fetch_latest_data()
         st.rerun()
-    # -----------------------------------
-    
-    # 즐겨찾기 로드
+
+    # 즐겨찾기 로드 및 단지 선택
     favorites = load_favorites()
-    
     apt_list = sorted(df['단지명'].unique())
-    # 즐겨찾기로 지정된 단지를 리스트 맨 위로 정렬합니다.
     apt_list = sorted(apt_list, key=lambda x: (0 if x in favorites else 1, x))
     
-    # 이전에 즐겨찾기한 단지가 현재 데이터에 있다면 기본으로 선택되게 합니다.
     default_apts = [apt for apt in favorites if apt in apt_list]
     
-    # 선택지에서 즐겨찾기된 단지는 별모양을 붙여서 표시합니다.
-    def format_apt(apt_name):
-        return f"⭐ {apt_name}" if apt_name in favorites else apt_name
-
     selected_apts = st.sidebar.multiselect(
         "🏢 관심 단지 선택", 
         options=apt_list,
         default=default_apts,
-        format_func=format_apt,
-        placeholder="단지를 선택하세요"
+        format_func=lambda x: f"⭐ {x}" if x in favorites else x
     )
     
-    # 현재 선택된 단지를 즐겨찾기로 저장하는 버튼
     if st.sidebar.button("💾 현재 선택을 즐겨찾기 저장"):
         save_favorites(selected_apts)
-        st.sidebar.success("✅ 파일에 저장되었습니다! 다음 번에 앱을 열 때 자동으로 맨 위에 나오고 선택됩니다.")
+        st.sidebar.success("즐겨찾기가 저장되었습니다.")
+
+    st.sidebar.markdown("---")
+
+    # [핵심 수정] 전용면적 선택 파트: 체크박스(On/Off) 스타일로 변경
+    st.sidebar.subheader("📐 전용면적 타입 필터")
     
     if not selected_apts:
-        st.info("👈 왼쪽 사이드바에서 관심 있는 단지를 하나 이상 선택해 주세요.")
+        st.sidebar.info("단지를 먼저 선택하면 타입이 나타납니다.")
+        filtered_df = pd.DataFrame()
     else:
-        filtered_df = df[df['단지명'].isin(selected_apts)].copy()
+        temp_df = df[df['단지명'].isin(selected_apts)]
+        available_types = sorted(temp_df['전용면적_타입'].unique())
         
-        # 필터링 기준을 '실제 소수점 면적'이 아닌 '묶인 타입'으로 변경
-        available_types = sorted(filtered_df['전용면적_타입'].unique())
-        selected_types = st.sidebar.multiselect(
-            "📐 전용면적 (타입 묶음)", 
-            options=available_types,
-            default=available_types
-        )
+        # 개별 체크박스를 생성하여 선택된 타입 리스트 확보
+        selected_types = []
         
-        if selected_types:
-            filtered_df = filtered_df[filtered_df['전용면적_타입'].isin(selected_types)]
-            
-        # 차트 라벨을 깔끔한 타입명으로 변경
+        # "전체 선택/해제" 기능을 위한 버튼 (선택사항)
+        col_all, col_none = st.sidebar.columns(2)
+        if col_all.button("전체 켜기"):
+            for t in available_types: st.session_state[f"cb_{t}"] = True
+        if col_none.button("전체 끄기"):
+            for t in available_types: st.session_state[f"cb_{t}"] = False
+
+        for t in available_types:
+            # session_state를 이용해 상태 유지
+            if st.sidebar.checkbox(t, value=True, key=f"cb_{t}"):
+                selected_types.append(t)
+        
+        filtered_df = temp_df[temp_df['전용면적_타입'].isin(selected_types)].copy()
+
+    # 4. 메인 화면 출력
+    if not selected_apts:
+        st.info("👈 왼쪽에서 분석할 아파트 단지를 선택해 주세요.")
+    elif filtered_df.empty:
+        st.warning("선택한 면적 타입에 해당하는 거래 데이터가 없습니다.")
+    else:
+        # 차트 라벨 생성
         filtered_df['차트라벨'] = filtered_df['단지명'] + " (" + filtered_df['전용면적_타입'] + ")"
 
-        # 4. 상단 핵심 지표 (KPI)
-        st.subheader("📊 선택 단지 요약")
-        col1, col2, col3 = st.columns(3)
-        col1.metric("총 거래 건수", f"{len(filtered_df)} 건")
-        
-        if not filtered_df.empty:
-            recent_trade = filtered_df.sort_values('거래일', ascending=False).iloc[0]
-            col2.metric("최근 거래가", f"{recent_trade['거래금액(만원)']:,.0f} 만원", f"{recent_trade['차트라벨']}")
-            col3.metric("평균 거래가", f"{filtered_df['거래금액(만원)'].mean():,.0f} 만원")
+        # KPI 지표
+        st.subheader("📊 거래 요약")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("총 거래", f"{len(filtered_df)}건")
+        recent = filtered_df.sort_values('거래일', ascending=False).iloc[0]
+        c2.metric("최근 거래가", f"{recent['거래금액(만원)']:,.0f}만원", recent['차트라벨'])
+        c3.metric("평균 거래가", f"{filtered_df['거래금액(만원)'].mean():,.0f}만원")
 
         st.markdown("---")
-        
-        # 5. 분리된 차트 & 데이터 표
-        col_chart, col_table = st.columns([1.2, 1])
-        
-        with col_chart:
-            # 제목과 기능(높이 조절, 기준선 설정)을 나란히 배치
-            chart_header1, chart_header2 = st.columns([1, 1.5])
-            with chart_header1:
-                st.write("📈 **단지 및 평형별 실거래가 추이**")
-            with chart_header2:
-                col_h, col_ref = st.columns(2)
-                with col_h:
-                    chart_height = st.slider("↕️ 차트 높이", 300, 1000, 450, 50)
-                with col_ref:
-                    # 기본값 150,000만원(15억). 사용자가 마음대로 변경 가능!
-                    ref_line = st.number_input("🎯 점선 기준선 (만원)", min_value=0, value=150000, step=10000)
 
-            # --- Altair를 이용한 고급 차트 그리기 ---
-            
-            # 1. 기본 꺾은선 차트 (마우스 올리면 상세 정보가 예쁘게 뜹니다)
-            line_chart = alt.Chart(filtered_df).mark_line(point=True).encode(
+        # 5. 차트 및 테이블
+        col_chart, col_table = st.columns([1.3, 1])
+
+        with col_chart:
+            # 설정 도구 모음
+            ctrl_1, ctrl_2 = st.columns([1, 1])
+            with ctrl_1:
+                chart_h = st.slider("↕️ 차트 높이", 300, 1000, 450, 50)
+            with ctrl_2:
+                ref_val = st.number_input("🎯 기준선 설정(만원)", value=150000, step=5000)
+
+            # Altair 차트 설정
+            base = alt.Chart(filtered_df).encode(
                 x=alt.X('거래일:T', title='거래일'),
-                y=alt.Y('거래금액(만원):Q', title='거래금액(만원)', scale=alt.Scale(zero=False)),
-                color=alt.Color('차트라벨:N', title='단지명 (타입)'),
-                tooltip=['거래일', '단지명', '전용면적_타입', '층', '거래금액(만원)']
+                y=alt.Y('거래금액(만원):Q', title='금액(만원)', scale=alt.Scale(zero=False)),
+                color=alt.Color('차트라벨:N', title='단지(타입)'),
+                tooltip=['거래일', '단지명', '전용면적', '층', '거래금액(만원)', '거래유형']
             )
             
-            # 2. 사용자가 설정한 값(15억)에 빨간색 점선(strokeDash) 긋기
-            rule = alt.Chart(pd.DataFrame({'y': [ref_line]})).mark_rule(
+            lines = base.mark_line(point=True)
+            rule = alt.Chart(pd.DataFrame({'y': [ref_val]})).mark_rule(
                 strokeDash=[5, 5], color='red', size=2
             ).encode(y='y:Q')
-            
-            # 3. 꺾은선 차트와 점선을 합쳐서 화면에 출력!
-            st.altair_chart(
-                (line_chart + rule).properties(height=chart_height), 
-                use_container_width=True
-            )
+
+            st.altair_chart((lines + rule).properties(height=chart_h), use_container_width=True)
 
         with col_table:
-            st.write("📝 **상세 거래 내역**")
-            # 표에는 정확한 확인을 위해 원본 '전용면적'과 '전용면적_타입'을 모두 표시
-            display_cols = ['거래일', '단지명', '전용면적_타입', '전용면적', '층', '거래금액(만원)', '건축년도', '거래유형', '해제사유발생일']
-            actual_cols = [c for c in display_cols if c in filtered_df.columns]
-            
-            display_df = filtered_df[actual_cols].sort_values('거래일', ascending=False).copy()
+            st.write("📝 **상세 데이터**")
+            cols = ['거래일', '단지명', '전용면적_타입', '층', '거래금액(만원)', '거래유형', '건축년도']
+            display_df = filtered_df[cols].sort_values('거래일', ascending=False)
             st.dataframe(
-                display_df.style.format({'거래금액(만원)': '{:,.0f}', '전용면적': '{:.2f}'}),
-                width='stretch',
+                display_df.style.format({'거래금액(만원)': '{:,.0f}'}),
+                width='stretch', 
                 height=450
             )
