@@ -86,7 +86,7 @@ else:
         # 개별 체크박스를 생성하여 선택된 타입 리스트 확보
         selected_types = []
         
-        # "전체 선택/해제" 기능을 위한 버튼 (선택사항)
+        # "전체 선택/해제" 기능을 위한 버튼
         col_all, col_none = st.sidebar.columns(2)
         if col_all.button("전체 켜기"):
             for t in available_types: st.session_state[f"cb_{t}"] = True
@@ -138,7 +138,10 @@ else:
                 tooltip=['거래일', '단지명', '전용면적', '층', '거래금액(만원)', '거래유형']
             )
             
-            lines = base.mark_line(point=True)
+            # --- 마법의 코드 .interactive() 가 여기에 적용되었습니다! ---
+            lines = base.mark_line(point=True).interactive()
+            
+            # 15억 기준선 (점선)
             rule = alt.Chart(pd.DataFrame({'y': [ref_val]})).mark_rule(
                 strokeDash=[5, 5], color='red', size=2
             ).encode(y='y:Q')
