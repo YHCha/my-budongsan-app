@@ -4,6 +4,7 @@ import json
 import os
 import sys
 from datetime import datetime
+import altair as alt
 
 # main.py에서 데이터 수집 함수 임포트
 try:
@@ -141,20 +142,37 @@ else:
         col_chart, col_table = st.columns([1.2, 1])
         
         with col_chart:
-            # 제목과 나란히 슬라이더를 배치하기 위해 컬럼 분할 (선택사항)
-            chart_header1, chart_header2 = st.columns([1, 1])
+            # 제목과 기능(높이 조절, 기준선 설정)을 나란히 배치
+            chart_header1, chart_header2 = st.columns([1, 1.5])
             with chart_header1:
                 st.write("📈 **단지 및 평형별 실거래가 추이**")
             with chart_header2:
-                # 사용자가 마우스로 움직일 수 있는 높이 조절 슬라이더 추가
-                chart_height = st.slider("↕️ 차트 높이 조절", min_value=300, max_value=1000, value=400, step=50)
+                col_h, col_ref = st.columns(2)
+                with col_h:
+                    chart_height = st.slider("↕️ 차트 높이", 300, 1000, 450, 50)
+                with col_ref:
+                    # 기본값 150,000만원(15억). 사용자가 마음대로 변경 가능!
+                    ref_line = st.number_input("🎯 점선 기준선 (만원)", min_value=0, value=150000, step=10000)
+
+            # --- Altair를 이용한 고급 차트 그리기 ---
             
-            st.line_chart(
-                filtered_df,
-                x='거래일',
-                y='거래금액(만원)',
-                color='차트라벨',
-                height=chart_height  # <-- 슬라이더의 값을 차트 높이에 연결!
+            # 1. 기본 꺾은선 차트 (마우스 올리면 상세 정보가 예쁘게 뜹니다)
+            line_chart = alt.Chart(filtered_df).mark_line(point=True).encode(
+                x=alt.X('거래일:T', title='거래일'),
+                y=alt.Y('거래금액(만원):Q', title='거래금액(만원)', scale=alt.Scale(zero=False)),
+                color=alt.Color('차트라벨:N', title='단지명 (타입)'),
+                tooltip=['거래일', '단지명', '전용면적_타입', '층', '거래금액(만원)']
+            )
+            
+            # 2. 사용자가 설정한 값(15억)에 빨간색 점선(strokeDash) 긋기
+            rule = alt.Chart(pd.DataFrame({'y': [ref_line]})).mark_rule(
+                strokeDash=[5, 5], color='red', size=2
+            ).encode(y='y:Q')
+            
+            # 3. 꺾은선 차트와 점선을 합쳐서 화면에 출력!
+            st.altair_chart(
+                (line_chart + rule).properties(height=chart_height), 
+                use_container_width=True
             )
 
         with col_table:
