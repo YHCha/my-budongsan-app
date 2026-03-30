@@ -141,12 +141,20 @@ else:
         col_chart, col_table = st.columns([1.2, 1])
         
         with col_chart:
-            st.write("📈 **단지 및 평형별 실거래가 추이**")
+            # 제목과 나란히 슬라이더를 배치하기 위해 컬럼 분할 (선택사항)
+            chart_header1, chart_header2 = st.columns([1, 1])
+            with chart_header1:
+                st.write("📈 **단지 및 평형별 실거래가 추이**")
+            with chart_header2:
+                # 사용자가 마우스로 움직일 수 있는 높이 조절 슬라이더 추가
+                chart_height = st.slider("↕️ 차트 높이 조절", min_value=300, max_value=1000, value=400, step=50)
+            
             st.line_chart(
                 filtered_df,
                 x='거래일',
                 y='거래금액(만원)',
-                color='차트라벨'
+                color='차트라벨',
+                height=chart_height  # <-- 슬라이더의 값을 차트 높이에 연결!
             )
 
         with col_table:
