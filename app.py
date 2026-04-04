@@ -6,6 +6,13 @@ import sys
 from datetime import datetime
 import altair as alt
 
+# --- [복구됨] main.py에서 데이터 수집 함수 임포트 ---
+try:
+    from main import main as fetch_latest_data
+except ImportError:
+    st.error("main.py 파일을 찾을 수 없습니다.")
+    fetch_latest_data = lambda: None
+
 # --- 즐겨찾기 로직 ---
 FAVORITES_FILE = "favorites.json"
 
@@ -24,6 +31,20 @@ def save_favorites(fav_list):
 
 # 1. 페이지 기본 설정
 st.set_page_config(page_title="실거래가 정밀 분석기", layout="wide")
+
+# 1-1. [복구됨] 최신 데이터 자동 수집 기능 (하루 1회)
+@st.cache_data(ttl=86400)
+def auto_update_data():
+    try:
+        fetch_latest_data() # main.py의 로직 실행
+        return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    except Exception as e:
+        return f"업데이트 실패: {e}"
+
+# 앱 시작 시 자동 업데이트 함수 호출
+last_update_time = auto_update_data()
+if last_update_time and not last_update_time.startswith("업데이트 실패"):
+    st.toast(f"마지막 데이터 갱신: {last_update_time}")
 
 # 2. 데이터 불러오기 (캐싱)
 @st.cache_data
@@ -48,9 +69,11 @@ else:
     # 3. 왼쪽 사이드바
     st.sidebar.header("🔍 즐겨찾기 및 필터")
     
-    # 데이터 수동 갱신 버튼
-    if st.sidebar.button("🔄 데이터 수동 새로고침"):
+    # [복구됨] 데이터 수동 갱신 버튼 (크롤링 실행 추가)
+    if st.sidebar.button("🔄 최신 데이터 수동 불러오기"):
         st.cache_data.clear()
+        with st.spinner("공공데이터 포털에서 최신 실거래가를 가져오는 중입니다..."):
+            fetch_latest_data() # 여기서 실제로 main.py를 실행합니다!
         st.rerun()
 
     # 즐겨찾기 로드 및 단지 선택
@@ -73,7 +96,7 @@ else:
 
     st.sidebar.markdown("---")
 
-    # [핵심 수정] 전용면적 선택 파트: 체크박스(On/Off) 스타일로 변경
+    # 전용면적 선택 파트: 체크박스(On/Off) 스타일
     st.sidebar.subheader("📐 전용면적 타입 필터")
     
     if not selected_apts:
@@ -138,7 +161,7 @@ else:
                 tooltip=['거래일', '단지명', '전용면적', '층', '거래금액(만원)', '거래유형']
             )
             
-            # --- 마법의 코드 .interactive() 가 여기에 적용되었습니다! ---
+            # 마법의 확대/축소 코드
             lines = base.mark_line(point=True).interactive()
             
             # 15억 기준선 (점선)
