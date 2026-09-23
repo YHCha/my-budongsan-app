@@ -229,6 +229,35 @@ def save_region(key, region, end_date):
         return combined
 
     combined["거래일"] = pd.to_datetime(combined["거래일"], errors="coerce")
+
+    # Normalize legacy CSV rows created before 지역/지역코드 columns existed.
+    # Each regional file contains only that region, so filling these values here
+    # is deterministic and prevents old/new rows from splitting in analysis.
+    if "지역" not in combined.columns:
+        combined["지역"] = region["name"]
+    else:
+        combined["지역"] = combined["지역"].fillna(region["name"])
+        combined.loc[
+            combined["지역"].astype(str).str.strip().isin(["", "nan", "None"]),
+            "지역",
+        ] = region["name"]
+
+    if "지역코드" not in combined.columns:
+        combined["지역코드"] = region["code"]
+    else:
+        combined["지역코드"] = combined["지역코드"].fillna(region["code"])
+        combined.loc[
+            combined["지역코드"].astype(str).str.strip().isin(["", "nan", "None"]),
+            "지역코드",
+        ] = region["code"]
+
+    # Store region codes consistently as strings (avoid 41597.0 after CSV merges).
+    combined["지역코드"] = (
+        combined["지역코드"]
+        .astype(str)
+        .str.replace(r"\.0$", "", regex=True)
+    )
+
     combined.drop_duplicates(subset=DEDUP_COLS, keep="last", inplace=True)
     combined.sort_values("거래일", ascending=False, inplace=True)
     combined.to_csv(filename, index=False, encoding="utf-8-sig")
