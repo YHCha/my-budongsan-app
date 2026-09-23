@@ -11,6 +11,12 @@ API_URL = "https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvc
 
 INITIAL_START_DATE = date(2020, 1, 1)
 REFRESH_MONTHS = 3
+MAX_RETRIES = 3
+
+# One-time historical gaps to force-refresh. Safe to leave in place because deduplication prevents duplicates.
+FORCE_BACKFILL = {
+    "songpa": [date(2020, 6, 1)],
+}
 
 REGIONS = {
     "hwasung": {"name": "화성시", "code": "41597"},
@@ -69,8 +75,22 @@ def get_api_data(region_name, lawd_cd, start_date, end_date):
         }
 
         try:
-            response = requests.get(API_URL, params=params, timeout=30)
-            response.raise_for_status()
+            response = None
+            for attempt in range(1, MAX_RETRIES + 1):
+                try:
+                    response = requests.get(API_URL, params=params, timeout=45)
+                    response.raise_for_status()
+                    break
+                except requests.RequestException as e:
+                    if attempt == MAX_RETRIES:
+                        raise
+                    wait_seconds = attempt * 2
+                    print(
+                        f"  요청 실패 ({attempt}/{MAX_RETRIES}): {e} "
+                        f"-> {wait_seconds}초 후 재시도"
+                    )
+                    time.sleep(wait_seconds)
+
             root = ET.fromstring(response.content)
 
             result_code_elem = root.find(".//resultCode")
@@ -180,6 +200,19 @@ def save_region(key, region, end_date):
         end_date,
     )
 
+    # Force-refresh known historical gaps (for example, Songpa 2020-06 timeout).
+    for forced_month in FORCE_BACKFILL.get(key, []):
+        forced_end = forced_month
+        print(f"[강제 보충] {region['name']} {forced_month:%Y-%m}")
+        new_rows.extend(
+            get_api_data(
+                region["name"],
+                region["code"],
+                forced_month,
+                forced_end,
+            )
+        )
+
     new_df = pd.DataFrame(new_rows)
     if not new_df.empty:
         new_df["거래일"] = pd.to_datetime(new_df["거래일"], errors="coerce")
@@ -223,6 +256,31 @@ def main():
         print()
         print("=" * 60)
         print(f"전체 통합본 저장 완료: {len(all_df):,}건")
+
+        # Small analysis file for the apartments used in our comparison work.
+        # Keep broad name matching here; exact area filtering is done at analysis time
+        # so the raw target transactions remain inspectable.
+        target_patterns = [
+            "우남", "파라곤", "반도",
+            "엘스", "트리지움", "레이크팰리스",
+            "래미안대치팰리스", "도곡렉슬", "디에이치개포", "루체하임",
+            "산성역포레스티아", "산운11", "판교포레라움",
+        ]
+
+        name_series = all_df["단지명"].fillna("").astype(str)
+        target_mask = pd.Series(False, index=all_df.index)
+        for pattern in target_patterns:
+            target_mask = target_mask | name_series.str.contains(
+                pattern, case=False, regex=False
+            )
+
+        analysis_df = all_df.loc[target_mask].copy()
+        analysis_df.to_csv(
+            "analysis_apartments.csv",
+            index=False,
+            encoding="utf-8-sig",
+        )
+        print(f"분석용 대상단지 파일 저장 완료: {len(analysis_df):,}건")
 
 if __name__ == "__main__":
     main()
