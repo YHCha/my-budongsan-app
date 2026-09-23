@@ -10,8 +10,8 @@ import os
 DATA_FILE = "hwasung_apartment_data.csv"
 
 def get_api_data(current_date, end_date):
-    """지정된 기간 동안 API로부터 데이터를 가져옵니다."""
-    SERVICE_KEY = "bc5d120288b42111ceffb71f6d408b98b9596b9ebec15f45c55b314653a0b5f8"
+   """지정된 기간 동안 API로부터 데이터를 가져옵니다."""
+    SERVICE_KEY = os.environ["MOLIT_SERVICE_KEY"]
     LAWD_CD = "41597"
     url = "https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev"
     new_item_list = []
