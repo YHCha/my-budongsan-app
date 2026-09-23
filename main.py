@@ -282,5 +282,89 @@ def main():
         )
         print(f"분석용 대상단지 파일 저장 완료: {len(analysis_df):,}건")
 
+        # Compact files small enough for downstream inspection/graphing.
+        if not analysis_df.empty:
+            compact = analysis_df.copy()
+            compact["거래일"] = pd.to_datetime(compact["거래일"], errors="coerce")
+            compact["연월"] = compact["거래일"].dt.to_period("M").astype(str)
+            compact["연도"] = compact["거래일"].dt.year
+            compact["반기"] = compact["연도"].astype("Int64").astype(str) + "H" + (
+                (compact["거래일"].dt.month > 6).astype(int) + 1
+            ).astype(str)
+
+            # Normalize area to 0.1㎡ buckets so tiny floating-point differences
+            # do not split otherwise identical apartment types.
+            compact["면적구간"] = pd.to_numeric(
+                compact["전용면적"], errors="coerce"
+            ).round(1)
+            compact["거래금액(만원)"] = pd.to_numeric(
+                compact["거래금액(만원)"], errors="coerce"
+            )
+
+            monthly = (
+                compact.dropna(subset=["거래일", "거래금액(만원)", "면적구간"])
+                .groupby(
+                    ["지역", "단지명", "면적구간", "연월"],
+                    dropna=False,
+                    as_index=False,
+                )
+                .agg(
+                    거래건수=("거래금액(만원)", "size"),
+                    중앙값_만원=("거래금액(만원)", "median"),
+                    최저가_만원=("거래금액(만원)", "min"),
+                    최고가_만원=("거래금액(만원)", "max"),
+                )
+                .sort_values(["지역", "단지명", "면적구간", "연월"])
+            )
+            monthly.to_csv(
+                "analysis_monthly.csv", index=False, encoding="utf-8-sig"
+            )
+
+            halfyear = (
+                compact.dropna(subset=["거래일", "거래금액(만원)", "면적구간"])
+                .groupby(
+                    ["지역", "단지명", "면적구간", "반기"],
+                    dropna=False,
+                    as_index=False,
+                )
+                .agg(
+                    거래건수=("거래금액(만원)", "size"),
+                    중앙값_만원=("거래금액(만원)", "median"),
+                    최저가_만원=("거래금액(만원)", "min"),
+                    최고가_만원=("거래금액(만원)", "max"),
+                )
+                .sort_values(["지역", "단지명", "면적구간", "반기"])
+            )
+            halfyear.to_csv(
+                "analysis_halfyear.csv", index=False, encoding="utf-8-sig"
+            )
+
+            # Inventory lets us verify exact apartment names and available areas
+            # before choosing graph series.
+            inventory = (
+                compact.dropna(subset=["면적구간"])
+                .groupby(
+                    ["지역", "단지명", "면적구간"],
+                    dropna=False,
+                    as_index=False,
+                )
+                .agg(
+                    전체거래건수=("거래금액(만원)", "size"),
+                    최초거래일=("거래일", "min"),
+                    최근거래일=("거래일", "max"),
+                )
+                .sort_values(["지역", "단지명", "면적구간"])
+            )
+            inventory.to_csv(
+                "analysis_inventory.csv", index=False, encoding="utf-8-sig"
+            )
+
+            print(
+                "소형 분석파일 저장 완료: "
+                f"inventory {len(inventory):,}행 / "
+                f"monthly {len(monthly):,}행 / "
+                f"halfyear {len(halfyear):,}행"
+            )
+
 if __name__ == "__main__":
     main()
