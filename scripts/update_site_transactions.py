@@ -21,6 +21,14 @@ ROOT = Path(__file__).resolve().parents[1]
 API = 'https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev'
 KST = timezone(timedelta(hours=9))
 COLS = ['지역코드','단지명','거래일','전용면적','층','거래금액(만원)','법정동','지번','동','등기일자','거래유형','해제사유발생일','기타_cdealDay','해제여부','매수자구분','매도자구분','출처']
+# Exact names verified in public regional CSVs. Extra rows are available for
+# analysis/download; existing UI candidate metadata and ordering stay unchanged.
+EXTRA_TARGETS = {
+    ('41597', '동탄역 반도유보라 아이비파크5.0'): ((59, 60), (74, 75)),
+    ('41131', '산성역자이푸르지오1단지'): ((51, 52), (59, 60)),
+    ('41131', '산성역자이푸르지오2단지'): ((59, 60),),
+    ('41131', '산성역자이푸르지오3단지'): ((51, 52), (59, 60)),
+}
 
 class CollectionError(RuntimeError):
     pass
@@ -173,6 +181,9 @@ def main():
     cutoff = today - timedelta(days=1)
     seed, old = load_previous(options.data_dir)
     targets = {(c['code'], norm(c['n'])):c['n'] for c in seed['complexes']}
+    extra_ranges = {(code, norm(name)): ranges for (code, name), ranges in EXTRA_TARGETS.items()
+                    if (code, norm(name)) not in targets}
+    targets.update({(code, norm(name)): name for code, name in EXTRA_TARGETS})
     jobs = [(code, month) for code in sorted({c['code'] for c in seed['complexes']}) for month in months(options.refresh_start, cutoff)]
     fresh, coverage = [], []
     def collect(job):
@@ -180,6 +191,10 @@ def main():
         items = fetch_month(key, code, month)
         normalized = [normalize(item,code,month,targets,today.isoformat()) for item in items]
         normalized = [r for r in normalized if r and r['거래일'] <= cutoff.isoformat()]
+        normalized = [r for r in normalized
+                      if (r['지역코드'], norm(r['단지명'])) not in extra_ranges
+                      or any(lo <= float(r['전용면적']) < hi for lo, hi in
+                             extra_ranges[(r['지역코드'], norm(r['단지명']))])]
         print(f'{code} {month}: total {len(items)}, target {len(normalized)}', flush=True)
         return normalized, {'region':code,'month':month,'apiTotalRows':len(items),'targetRows':len(normalized)}
     with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:

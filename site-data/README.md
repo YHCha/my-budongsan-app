@@ -1,5 +1,11 @@
 # Site transaction feed
 
+Full-region historical collection is now a separate layer: see
+[TRANSACTION_ARCHIVE.md](../TRANSACTION_ARCHIVE.md) for coverage, partition schema,
+storage limits and the independent `transaction-archive` branch. This feed remains
+the existing Site contract. Additional verified targets enter CSV downloads on the
+next successful refresh without changing the 23 UI candidate definitions.
+
 The existing Actions workflow runs daily at 07:17 Asia/Seoul (scheduled starts may be delayed), on changes to the updater, and through workflow_dispatch. No user visit is required.
 
 The existing MOLIT_SERVICE_KEY repository secret stays in Actions. Only Python's standard library is required. The updater re-queries all six districts for each month from January 2025 through yesterday in Korea, verifies pagination and totals, replaces these months, preserves separate identical-looking contracts, and excludes cancellations only from chart summaries. Contracts before 2025 retain the reconciled v26 baseline. KB prices and listing counts retain their original dates and are not refreshed by MOLIT.

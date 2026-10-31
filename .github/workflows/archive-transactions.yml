@@ -1,0 +1,66 @@
+name: Archive full-region MOLIT transactions
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '47 22 * * *'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/archive_transactions.py'
+      - 'scripts/update_site_transactions.py'
+      - 'tests/test_archive_transactions.py'
+      - '.github/workflows/archive-transactions.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: molit-full-region-archive
+  cancel-in-progress: false
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests -v
+      - name: Load previous archive, fail closed on remote errors
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          git ls-remote --exit-code origin refs/heads/transaction-archive > "$RUNNER_TEMP/archive-ref"
+          status=$?
+          set -e
+          if [ "$status" -eq 0 ]; then
+            expected=$(cut -f1 "$RUNNER_TEMP/archive-ref")
+            git fetch origin "$expected"
+            git worktree add --detach "$RUNNER_TEMP/molit-archive" FETCH_HEAD
+          elif [ "$status" -eq 2 ]; then
+            expected=''
+            git worktree add --detach "$RUNNER_TEMP/molit-archive" HEAD
+          else
+            exit "$status"
+          fi
+          echo "ARCHIVE_EXPECTED=$expected" >> "$GITHUB_ENV"
+      - name: Collect and verify all region records
+        env:
+          MOLIT_SERVICE_KEY: ${{ secrets.MOLIT_SERVICE_KEY }}
+        run: python scripts/archive_transactions.py --archive-dir "$RUNNER_TEMP/molit-archive/archive"
+      - name: Publish bounded archive snapshot with lease
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/molit-archive"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout --orphan archive-next
+          git rm -r --cached --ignore-unmatch . > /dev/null
+          git add -f -- archive
+          git commit -m 'Publish validated full-region snapshot'
+          git push --force-with-lease="refs/heads/transaction-archive:$ARCHIVE_EXPECTED" origin HEAD:refs/heads/transaction-archive
