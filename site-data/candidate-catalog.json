@@ -3738,6 +3738,88 @@
       "redevelopment": "확인 필요",
       "permit": "매수 시점 확인 필요",
       "residency": "확인 필요"
+    },
+    {
+      "id": "c7e90afae6417",
+      "code": "41133",
+      "n": "e편한세상금빛그랑메종1단지",
+      "label": "금빛그랑메종 1단지",
+      "region": "성남",
+      "role": "first",
+      "tier": "extended",
+      "status": "watch",
+      "focus": "59",
+      "profiles": [
+        {
+          "id": "59",
+          "label": "59㎡급",
+          "lo": 59,
+          "hi": 60,
+          "exactAreas": [
+            59.95,
+            59.98
+          ]
+        },
+        {
+          "id": "74",
+          "label": "74㎡급",
+          "lo": 74,
+          "hi": 75,
+          "exactAreas": [
+            74.62,
+            74.7,
+            74.88,
+            74.95
+          ]
+        },
+        {
+          "id": "84",
+          "label": "84㎡급",
+          "lo": 84,
+          "hi": 85,
+          "exactAreas": [
+            84.56,
+            84.98
+          ]
+        }
+      ],
+      "naverId": null,
+      "kbId": null,
+      "kbValues": [],
+      "kbDate": null,
+      "fields": {
+        "준공년월일": "2023-06-29",
+        "총세대수": 1135,
+        "세대당주차대수비율": null,
+        "용적률내용": null,
+        "건폐율내용": null,
+        "주상복합여부": null,
+        "신주소": "경기도 성남시 중원구 금광동 1001"
+      },
+      "propertySource": null,
+      "apiLocations": [
+        [
+          "금광동",
+          "1001",
+          "2023",
+          "41133-3061"
+        ]
+      ],
+      "typeVerification": "국토부 원자료 관측·2026-10-31",
+      "rail": "확인 필요",
+      "redevelopment": "확인 필요",
+      "strength": "정성평가: 중원구 신축급 대단지의 소형 진입가격을 포레스티아·산자푸·하늘채와 비교",
+      "weakness": "정성평가: 실제 역 접근·경사·통근·주차·허가/입주 조건과 타입별 표본 확인",
+      "permit": "매수 시점 지정 여부·필지·허가 조건 확인 필요",
+      "residency": "즉시 입주 가능 여부와 거주의무·유예 요건 별도 확인",
+      "officialName": "e편한세상금빛그랑메종1단지아파트",
+      "officialSources": [
+        {
+          "title": "K-apt 관리비 공개 의무단지 기본정보",
+          "url": "https://www.k-apt.go.kr/cmmn/introMmentPop.do?bjdCode=41&searchOccuDate=202609&upYn=Y",
+          "observedAt": "2026-10-31"
+        }
+      ]
     }
   ],
   "groups": [

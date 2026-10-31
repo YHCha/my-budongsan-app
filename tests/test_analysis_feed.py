@@ -62,7 +62,16 @@ class AnalysisTests(unittest.TestCase):
         self.assertEqual(c['focus'],'72');self.assertNotIn('59',[p['id'] for p in c['profiles']])
         c=next(c for c in catalog['candidates'] if c.get('n')=='신흥역하늘채랜더스원2단지')
         self.assertIn(51.89,next(p['exactAreas'] for p in c['profiles'] if p['id']=='51'))
-        self.assertEqual(sum(bool(c.get('n')) for c in catalog['candidates']),37)
+        self.assertEqual(sum(bool(c.get('n')) for c in catalog['candidates']),38)
         self.assertEqual(sum(c['tier']=='core' for c in catalog['candidates']),11)
+
+    def test_geumbit_first_complex_has_verified_identity_and_types(self):
+        catalog=json.loads((updater.ROOT/'site-data/candidate-catalog.json').read_text(encoding='utf-8'))
+        c=next(c for c in catalog['candidates'] if c.get('n')=='e편한세상금빛그랑메종1단지')
+        self.assertEqual(c['code'],'41133');self.assertEqual(c['focus'],'59')
+        self.assertEqual(next(p['exactAreas'] for p in c['profiles'] if p['id']=='59'),[59.95,59.98])
+        self.assertNotIn('51',[p['id'] for p in c['profiles']])
+        self.assertEqual(c['fields']['총세대수'],1135)
+        self.assertEqual(c['tier'],'extended')
 
 if __name__=='__main__':unittest.main()
