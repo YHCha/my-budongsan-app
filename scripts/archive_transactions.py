@@ -9,7 +9,8 @@ import os
 
 from update_site_transactions import CollectionError, KST, fetch_month, months, normalize, norm
 
-REGIONS = ('11170', '11680', '11710', '41131', '41135', '41597')
+LEGACY_REGIONS = ('11170', '11680', '11710', '41131', '41135', '41597')
+REGIONS = ('11170', '11680', '11710', '41131', '41133', '41135', '41597')
 START = '2020-01'
 MAX_PARTITION = 8 * 1024 * 1024
 MAX_ARCHIVE = 200 * 1024 * 1024
@@ -57,8 +58,11 @@ def load(directory):
             raise CollectionError('Archive manifest missing')
         return {'schemaVersion': 1, 'startMonth': START, 'regions': list(REGIONS), 'partitions': {}}
     manifest = json.loads(path.read_text(encoding='utf-8'))
-    if manifest.get('schemaVersion') != 1 or manifest.get('regions') != list(REGIONS):
+    if manifest.get('schemaVersion') != 1 or manifest.get('regions') not in (list(REGIONS), list(LEGACY_REGIONS)):
         raise CollectionError('Unsupported archive manifest')
+    # Explicit additive migration: keep all six existing regions and their checksums.
+    # New district partitions enter the normal bounded missing-month backfill.
+    manifest['regions'] = list(REGIONS)
     expected = set()
     for key, entry in manifest['partitions'].items():
         code, month = key.split('/')

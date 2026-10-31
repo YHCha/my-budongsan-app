@@ -33,7 +33,8 @@ class ArchiveTests(unittest.TestCase):
 
     def test_planner_backfill_recent_and_oldest_audit(self):
         jobs = a.plan({}, date(2026, 10, 30))
-        self.assertEqual(len(jobs), 48)
+        self.assertEqual(len(jobs), 54)
+        self.assertIn(('41133', '202610'), jobs)
         self.assertIn(('11170', '202001'), jobs)
         self.assertIn(('41597', '202610'), jobs)
         entries = {'11170/202001': {'checkedAt': '2020-01-01'}}
@@ -74,3 +75,23 @@ class ArchiveTests(unittest.TestCase):
             with self.assertRaises(a.CollectionError):
                 a.collect(Path(tmp), date(2026, 10, 30), fetch)
             self.assertEqual(list(Path(tmp).iterdir()), [])
+
+    def test_six_region_manifest_migrates_without_losing_partitions(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.object(a, 'plan', return_value=[('11170', '202001')]):
+            directory = Path(tmp)
+            a.collect(directory, date(2026, 10, 30), lambda *_: [self.item()])
+            path = directory/'manifest.json'
+            manifest = json.loads(path.read_text())
+            entries = manifest['partitions'].copy()
+            manifest['regions'] = list(a.LEGACY_REGIONS)
+            path.write_bytes(a.encoded(manifest))
+            migrated = a.load(directory)
+            self.assertEqual(migrated['regions'], list(a.REGIONS))
+            self.assertEqual(migrated['partitions'], entries)
+
+    def test_landers_targets_are_in_jungwon_not_sujeong(self):
+        from update_site_transactions import EXTRA_TARGETS
+        for number in (1, 2, 3):
+            name = f'신흥역하늘채랜더스원{number}단지'
+            self.assertEqual(EXTRA_TARGETS[('41133', name)], ((59, 60),))
+            self.assertNotIn(('41131', name), EXTRA_TARGETS)

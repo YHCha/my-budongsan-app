@@ -28,6 +28,9 @@ EXTRA_TARGETS = {
     ('41131', '산성역자이푸르지오1단지'): ((51, 52), (59, 60)),
     ('41131', '산성역자이푸르지오2단지'): ((59, 60),),
     ('41131', '산성역자이푸르지오3단지'): ((51, 52), (59, 60)),
+    ('41133', '신흥역하늘채랜더스원1단지'): ((59, 60),),
+    ('41133', '신흥역하늘채랜더스원2단지'): ((59, 60),),
+    ('41133', '신흥역하늘채랜더스원3단지'): ((59, 60),),
 }
 
 class CollectionError(RuntimeError):
@@ -184,7 +187,7 @@ def main():
     extra_ranges = {(code, norm(name)): ranges for (code, name), ranges in EXTRA_TARGETS.items()
                     if (code, norm(name)) not in targets}
     targets.update({(code, norm(name)): name for code, name in EXTRA_TARGETS})
-    jobs = [(code, month) for code in sorted({c['code'] for c in seed['complexes']}) for month in months(options.refresh_start, cutoff)]
+    jobs = [(code, month) for code in sorted({code for code, _ in targets}) for month in months(options.refresh_start, cutoff)]
     fresh, coverage = [], []
     def collect(job):
         code, month = job

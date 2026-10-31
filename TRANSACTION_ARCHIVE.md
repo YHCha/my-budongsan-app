@@ -16,16 +16,20 @@ Both use only the existing Actions secret, never client-side credentials.
 
 ## Coverage and reconciliation
 
-Six exact existing Site codes: 11170, 11680, 11710, 41131, 41135, 41597.
+Six original Site codes: 11170, 11680, 11710, 41131, 41135, 41597.
+Jungwon-gu 41133 is now added for 신흥역하늘채랜더스원 1/2/3단지.
+Existing six-region manifests migrate additively without discarding partitions.
 The legacy main.py has only five codes and is deliberately not used. The archive
 starts January 2020. Codes are held fixed for compatibility: administrative boundary
 or code changes need a separately verified migration, not guessed remapping.
 
-Every run fetches all six latest contract months, up to 12 missing region-months
+Every run fetches the latest six contract months for all seven districts, up to 12 missing region-months
 (oldest first), and up to 12 oldest checked historical partitions. A new archive
-starts with 48 region-month requests, normally at most 60 after auditing begins;
+starts with 54 region-month requests, normally at most 66 after auditing begins;
 pagination can increase API calls. Initial historical coverage takes about 39 daily
-runs at the October 2026 horizon. Missing partitions remain explicitly missing,
+runs at the original six-district October 2026 horizon; seven districts need about
+45 successful daily runs from empty (574 region-months at that horizon).
+Missing partitions remain explicitly missing,
 not zero transactions. Check completedPartitions/expectedPartitions and
 backfillComplete before claiming full historical coverage. Historical audit latency
 is roughly (historical partitions / 12) successful runs, not immediate. checkedAt
@@ -85,8 +89,12 @@ Extra CSV rows affect aggregate row counts and downloads but not existing candid
 definitions. Their pre-2025 history is not backfilled into the Site seed; use the
 archive after those partitions are fetched. Do not import the legacy deduplicated
 CSVs as authoritative history. Sanseong 2's 51 type was not observed in those CSVs.
-Sinheung Haneulchae is deferred: the legacy CSV name is 코오롱하늘채; an exact
-identity/address match is required before adding an alias to a public feed.
+The user's Sinheung target is 신흥역하늘채랜더스원1단지/2단지/3단지,
+in Jungwon-gu (41133), not the unrelated 코오롱하늘채 in Sujeong-gu.
+All three exact names are now selected for 59 <= area < 60 in the Site CSV,
+with contracts from 2025 re-queried on the next normal refresh. The existing
+23 UI candidate definitions remain unchanged. All Jungwon complexes enter the
+full-region archive through recent-month collection and bounded backfill.
 
 ## Operation and verification
 
