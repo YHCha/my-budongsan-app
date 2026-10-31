@@ -6,6 +6,35 @@ storage limits and the independent `transaction-archive` branch. This feed remai
 the existing Site contract. Additional verified targets enter CSV downloads on the
 next successful refresh without changing the 23 UI candidate definitions.
 
+## Expanded candidate and move-up analysis
+
+`candidate-catalog.json` retains the original 23 transaction complexes and adds 14
+verified complexes, their observed exact floor areas, independent complex IDs,
+core/watch/archive statuses, explicit pooled groups and dated public sources.
+Unknown property facts and unverified portal IDs stay null. It contains no private
+financial context. Central Xi has observed 72-square-metre types, not a fabricated
+59 type. Bando 7/8 retain their observed 73 and 76.1872 types.
+
+The daily updater reads this catalog to expand tracked names/area ranges across
+the same seven districts. The existing schedule, secret, pagination and full-month
+replacement guards remain. `latest.json` retains schemaVersion 1 and the original
+23 metadata definitions, adding `trackedTargets` for validation of extra CSV rows.
+
+`build_analysis_feed.py` verifies the archive manifest/checksums, replaces archive
+months with current daily refreshes where the target and partition are explicitly
+covered, and builds `analysis.json`. Pre-2020 baseline rows retain their original
+provenance. All matching archive contracts from 2020 are preserved, including
+cancellations and identical-looking separate contracts. The Site filters cancelled
+rows for charts and summaries and computes matched calendar-window medians/rates.
+Both feeds are committed together only after collection and analysis validation
+succeed. An archive checkout/build failure prevents publication of either new feed.
+
+The analysis feed's collection date is the daily feed date; historical partition
+freshness is separately recorded as `archive.checkedAtMin/Max`. That date does not
+claim that all historical months were fetched again that day. Source branch and
+archive commit remain explicit. No Site redeployment is needed for later successful
+data refreshes; catalog/schema changes still require compatible Site code.
+
 The existing Actions workflow runs daily at 07:17 Asia/Seoul (scheduled starts may be delayed), on changes to the updater, and through workflow_dispatch. No user visit is required.
 
 The existing MOLIT_SERVICE_KEY repository secret stays in Actions. Only Python's standard library is required. The updater re-queries all six districts for each month from January 2025 through yesterday in Korea, verifies pagination and totals, replaces these months, preserves separate identical-looking contracts, and excludes cancellations only from chart summaries. Contracts before 2025 retain the reconciled v26 baseline. KB prices and listing counts retain their original dates and are not refreshed by MOLIT.

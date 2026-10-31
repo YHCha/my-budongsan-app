@@ -11,6 +11,9 @@ on:
       - '.github/workflows/update-realestate-data.yml'
       - 'scripts/update_site_transactions.py'
       - 'tests/test_site_transactions.py'
+      - 'scripts/build_analysis_feed.py'
+      - 'tests/test_analysis_feed.py'
+      - 'site-data/candidate-catalog.json'
       - 'site-data/seed-market.json.gz'
       - 'site-data/seed-transactions.csv.gz'
 
@@ -36,11 +39,20 @@ jobs:
         env:
           MOLIT_SERVICE_KEY: ${{ secrets.MOLIT_SERVICE_KEY }}
         run: python scripts/update_site_transactions.py
+      - name: Load verified historical archive
+        uses: actions/checkout@v4
+        with:
+          ref: transaction-archive
+          path: archive-source
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Build compatible expanded analysis feed
+        run: python scripts/build_analysis_feed.py --archive-dir archive-source/archive --archive-commit "$(git -C archive-source rev-parse HEAD)"
       - name: Commit only a fully validated successful collection
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add site-data/latest.json
+          git add site-data/latest.json site-data/analysis.json
           if git diff --cached --quiet; then
             echo 'No data changes.'
           else

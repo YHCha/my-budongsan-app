@@ -94,7 +94,7 @@ class ArchiveTests(unittest.TestCase):
         from update_site_transactions import EXTRA_TARGETS
         for number in (1, 2, 3):
             name = f'신흥역하늘채랜더스원{number}단지'
-            self.assertEqual(EXTRA_TARGETS[('41133', name)], ((59, 60),))
+            self.assertIn((59, 60), EXTRA_TARGETS[('41133', name)])
             self.assertNotIn(('41131', name), EXTRA_TARGETS)
 
     def test_repeated_orphan_publication_preserves_changed_manifest(self):

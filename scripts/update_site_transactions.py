@@ -32,6 +32,13 @@ EXTRA_TARGETS = {
     ('41133', '신흥역하늘채랜더스원2단지'): ((59, 60),),
     ('41133', '신흥역하늘채랜더스원3단지'): ((59, 60),),
 }
+# Verified catalog extends collection; existing 23 UI metadata entries are retained.
+CATALOG_PATH = ROOT/'site-data/candidate-catalog.json'
+if CATALOG_PATH.exists():
+    for candidate in json.loads(CATALOG_PATH.read_text(encoding='utf-8'))['candidates']:
+        if candidate.get('n') and candidate.get('code') and candidate.get('profiles'):
+            EXTRA_TARGETS[(candidate['code'], candidate['n'])] = tuple(
+                (p['lo'], p['hi']) for p in candidate['profiles'])
 
 class CollectionError(RuntimeError):
     pass
@@ -206,6 +213,7 @@ def main():
             coverage.append(info)
     rows = replace_months(old, fresh, set(jobs))
     meta = summarize(seed, rows, today.isoformat(), cutoff, coverage)
+    meta['trackedTargets'] = [{'code': code, 'n': name} for (code, _), name in sorted(targets.items())]
     if meta['includedRows'] < seed['includedRows'] * .85:
         raise CollectionError('More than 15% of valid records disappeared; retaining previous publication')
     bundle = bundle_data(meta, rows)
