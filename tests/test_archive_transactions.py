@@ -6,6 +6,7 @@ from datetime import date
 import gzip
 import json
 import tempfile
+import subprocess
 import unittest
 from unittest.mock import patch
 
@@ -95,3 +96,26 @@ class ArchiveTests(unittest.TestCase):
             name = f'신흥역하늘채랜더스원{number}단지'
             self.assertEqual(EXTRA_TARGETS[('41133', name)], ((59, 60),))
             self.assertNotIn(('41131', name), EXTRA_TARGETS)
+
+    def test_repeated_orphan_publication_preserves_changed_manifest(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            def git(*args):
+                return subprocess.check_output(['git', *args], cwd=root, stderr=subprocess.STDOUT).decode().strip()
+            git('init')
+            git('config', 'user.name', 'Archive Test')
+            git('config', 'user.email', 'archive-test@example.invalid')
+            (root/'archive').mkdir()
+            (root/'archive/manifest.json').write_text('first')
+            (root/'source.txt').write_text('not in archive snapshot')
+            git('add', '.')
+            git('commit', '-m', 'initial')
+            for i in (1, 2):
+                (root/'archive/manifest.json').write_text(str(i))
+                git('checkout', '--orphan', f'snapshot-{i}')
+                git('read-tree', '--empty')
+                git('add', '--', 'archive')
+                git('commit', '-m', 'snapshot')
+                self.assertEqual(git('ls-tree', '-r', '--name-only', 'HEAD'), 'archive/manifest.json')
+                self.assertEqual(git('show', 'HEAD:archive/manifest.json'), str(i))
+                self.assertEqual(git('rev-list', '--count', 'HEAD'), '1')

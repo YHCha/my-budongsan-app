@@ -60,7 +60,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git checkout --orphan archive-next
-          git rm -r --cached --ignore-unmatch . > /dev/null
+          git read-tree --empty
           git add -f -- archive
           git commit -m 'Publish validated full-region snapshot'
           git push --force-with-lease="refs/heads/transaction-archive:$ARCHIVE_EXPECTED" origin HEAD:refs/heads/transaction-archive
