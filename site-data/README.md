@@ -45,7 +45,7 @@ seed-market.json and seed-transactions.csv are the public v26 snapshot from 2026
 
 main.py and regional CSVs remain legacy Streamlit collector inputs. The workflow now publishes the Site feed; it does not run the old append/deduplicate path or update the Streamlit datasets.
 
-Geumbit Grand Maison complex 1 (41133, gold district lot 1001, exact API name
+Geumbit Grand Maison complex 1 (41133, 금광동 1001, exact API name
 e편한세상금빛그랑메종1단지) is now an extended watch candidate. Verified focus
 areas: 59.95/59.98 square metres; 74 and 84 profiles remain selectable. The catalog
-now tracks 38 transaction complexes; candidate 51 is not fabricated for complex 1.
+now tracks 38 transaction complexes; no 51-square-metre type is fabricated for complex 1.
