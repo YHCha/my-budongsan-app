@@ -2,6 +2,17 @@ name: Archive full-region MOLIT transactions
 
 on:
   workflow_dispatch:
+    inputs:
+      mode:
+        description: 'daily: rolling refresh / full-backfill: finish all missing history once'
+        type: choice
+        options: [daily, full-backfill]
+        default: daily
+      batch_size:
+        description: 'Full-backfill partitions per validated checkpoint'
+        type: choice
+        options: ['75', '50', '100']
+        default: '75'
   schedule:
     - cron: '47 22 * * *'
   push:
@@ -22,7 +33,7 @@ concurrency:
 jobs:
   archive:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'full-backfill' && 360 || 45 }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -51,8 +62,20 @@ jobs:
       - name: Collect and verify all region records
         env:
           MOLIT_SERVICE_KEY: ${{ secrets.MOLIT_SERVICE_KEY }}
-        run: python scripts/archive_transactions.py --archive-dir "$RUNNER_TEMP/molit-archive/archive"
+          FULL_BACKFILL: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'full-backfill' }}
+          BATCH_SIZE: ${{ inputs.batch_size || '75' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=(--archive-dir "$RUNNER_TEMP/molit-archive/archive")
+          if [ "$FULL_BACKFILL" = 'true' ]; then
+            git -C "$RUNNER_TEMP/molit-archive" config user.name 'github-actions[bot]'
+            git -C "$RUNNER_TEMP/molit-archive" config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            args+=(--full-backfill --batch-size "$BATCH_SIZE" --publish-checkpoints)
+          fi
+          python scripts/archive_transactions.py "${args[@]}"
       - name: Publish bounded archive snapshot with lease
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.mode == 'full-backfill') }}
         shell: bash
         run: |
           set -euo pipefail

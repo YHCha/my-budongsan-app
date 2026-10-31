@@ -98,6 +98,53 @@ full-region archive through recent-month collection and bounded backfill.
 
 ## Operation and verification
 
+### One-time full backfill
+
+In Actions, open **Archive full-region MOLIT transactions → Run workflow** on
+`main`, select **mode = full-backfill**, leave **batch_size = 75** (50 or 100 are
+also available), and run once. The workflow processes all missing region-months
+sequentially until its fixed execution-start cutoff is covered. For example,
+78/574 complete means 496 remaining, handled in six batches of 75 and one of 46.
+The final batch can be smaller than the selected size. Existing entries, including
+verified zero-row months, are skipped; this mode does not repeat recent refreshes
+or historical audits. Scheduled/push runs and the default `daily` input keep the
+existing recent-six-month + 12 missing + 12 audit plan and 45-minute timeout.
+The independent daily Site workflow is unchanged.
+
+Every full-backfill batch uses the same record validation, multiset/cancellation
+preservation, pagination and checksum checks as normal collection. After local
+validation, it publishes an archive-only orphan snapshot using an exact lease on
+`transaction-archive`. Each successful push supplies the next push's expected
+head. The next batch cannot begin until publication succeeds. The shared archive
+concurrency group queues other archive runs without cancelling a running one.
+An unexpected external writer rejects the lease rather than overwriting its data.
+
+After any API, validation, disk, request-budget, publication, timeout or cancellation
+failure, run the same full-backfill input again. A fresh runner loads and verifies
+the last **remote** checkpoint and skips those completed partitions. Work from an
+unfinished/unpublished batch is fetched again. Do not reuse a failed runner's local
+work directory or reset its manifest. Full mode allows up to six hours; reaching
+that GitHub limit does not erase completed checkpoints or schedule extra runs.
+It does not enable a recurring full backfill or automatically chain workflows.
+
+Archive requests are sequential with at least one second between page-call starts.
+Shared network/XML retries retain three attempts and exponential backoff; the
+execution is additionally capped at 2,000 page calls (at most 6,000 HTTP attempts).
+This is a collector safety budget, not a claim about the API key's external quota.
+Quota rejection fails safely, and later runs resume. The existing 100-page/month,
+8 MiB/partition and 200 MiB/archive guards remain. No key is needed for planning:
+
+```
+python scripts/archive_transactions.py --archive-dir /path/to/previous/archive --plan --full-backfill
+python scripts/archive_transactions.py --archive-dir /path/to/previous/archive --full-backfill --batch-size 75 --dry-run
+```
+
+A full-mode dry run fetches/validates **only the next batch**, writing/publishing
+nothing. Actions uses `--full-backfill --batch-size 75 --publish-checkpoints` with
+the existing secret and the previously inspected `ARCHIVE_EXPECTED` lease.
+No new persistent credential is required. `--full-backfill` without publication is
+for local collection only and does not by itself provide remote checkpoints.
+
 ```
 python -m unittest discover -s tests -v
 python scripts/archive_transactions.py --plan
@@ -107,14 +154,18 @@ python scripts/archive_transactions.py --archive-dir /path/to/previous/archive -
 `--plan` needs no key or network and writes nothing. `--dry-run` needs the Actions
 secret in the environment, fetches/validates the planned batch, and writes nothing.
 Never paste keys into command arguments, issue bodies or repository files.
-For initial population, run the new workflow manually or wait for its scheduled run;
-inspect its success and the branch manifest. Repeat successful runs to backfill.
+For bounded daily population, run with mode `daily` or wait for its scheduled run;
+inspect its success and the branch manifest. Use `full-backfill` to finish missing
+history in one manual execution instead of repeating the bounded daily plan.
 Do not reset the manifest to accelerate backfill. Never claim the archive is fully
 populated merely because the pipeline has been installed.
 
 Offline tests cover pagination (existing suite), cancellation replacement,
 identical contracts, untracked complexes, invalid records, rolling/audit planning,
 no-write dry runs, late-fetch failure, checksum corruption and size/drop guards.
+Full-mode tests additionally cover 496 missing partitions in seven checkpoints,
+failure/resume, checkpoint failure stopping further API calls, verified empty
+months, request pacing/budget, and real local Git publication/lease conflicts.
 No live API validation is possible locally without the secret; first Actions run
 is the integration check. The private PROJECT_CONTEXT.md and financial assumptions
 are not inputs to this pipeline. The code publication allowlist contains only

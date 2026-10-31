@@ -119,3 +119,141 @@ class ArchiveTests(unittest.TestCase):
                 self.assertEqual(git('ls-tree', '-r', '--name-only', 'HEAD'), 'archive/manifest.json')
                 self.assertEqual(git('show', 'HEAD:archive/manifest.json'), str(i))
                 self.assertEqual(git('rev-list', '--count', 'HEAD'), '1')
+
+    def historic_item(self, code, month):
+        return self.item(sggCd=code, dealYear=month[:4], dealMonth=str(int(month[4:])))
+
+    def test_full_backfill_496_missing_in_sequential_75_partition_checkpoints(self):
+        cutoff = date(2026, 10, 30)
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            all_jobs = a.missing_jobs({}, cutoff)
+            fetch = lambda c, m: [self.historic_item(c, m)]
+            a.collect(directory, cutoff, fetch, jobs=all_jobs[:78])
+            old = {key: entry.copy() for key, entry in a.load(directory)['partitions'].items()}
+            calls, checkpoints = [], []
+            def collect(code, month):
+                calls.append((code, month))
+                row = self.historic_item(code, month)
+                return [row, row, dict(row, cdealType='O')]
+            def checkpoint():
+                checkpoints.append(a.load(directory)['completedPartitions'])
+            result = a.full_backfill(directory, cutoff, collect, checkpoint=checkpoint)
+            self.assertEqual(checkpoints, [153, 228, 303, 378, 453, 528, 574])
+            self.assertEqual(calls, all_jobs[78:])
+            self.assertEqual(len(calls), 496)
+            self.assertTrue(result['backfillComplete'])
+            for key, entry in old.items():
+                self.assertEqual(result['partitions'][key], entry)
+            payload = json.loads(gzip.decompress((directory / ('/'.join(calls[0]) + '.json.gz')).read_bytes()))
+            self.assertEqual(len(payload['records']), 3)
+            self.assertEqual(sum(r['cdealType'] == 'O' for r in payload['records']), 1)
+            def forbidden(*args):
+                self.fail('Completed backfill must not fetch or publish again')
+            a.full_backfill(directory, cutoff, forbidden, checkpoint=forbidden)
+
+    def test_full_backfill_resumes_from_last_published_batch_after_fetch_failure(self):
+        cutoff = date(2020, 10, 30)  # 70 partitions, two batches at size 50.
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            calls, published = [], []
+            def fetch(code, month):
+                calls.append((code, month))
+                if len(calls) == 52:
+                    raise a.CollectionError('simulated API failure')
+                return [self.historic_item(code, month)]
+            def checkpoint():
+                published.append(a.load(directory)['completedPartitions'])
+            with self.assertRaises(a.CollectionError):
+                a.full_backfill(directory, cutoff, fetch, 50, checkpoint)
+            self.assertEqual(published, [50])
+            self.assertEqual(a.load(directory)['completedPartitions'], 50)
+            resumed = []
+            def resume(code, month):
+                resumed.append((code, month))
+                return [self.historic_item(code, month)]
+            result = a.full_backfill(directory, cutoff, resume, 50, checkpoint)
+            self.assertEqual(resumed, a.missing_jobs({}, cutoff)[50:])
+            self.assertEqual(published, [50, 70])
+            self.assertTrue(result['backfillComplete'])
+
+    def test_failed_checkpoint_stops_before_any_next_batch(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            calls = []
+            def fetch(code, month):
+                calls.append((code, month))
+                return [self.historic_item(code, month)]
+            def unavailable():
+                raise a.CollectionError('lease rejected')
+            with self.assertRaises(a.CollectionError):
+                a.full_backfill(Path(tmp), date(2020, 10, 30), fetch, 50, unavailable)
+            self.assertEqual(len(calls), 50)
+
+    def test_full_backfill_plan_zero_rows_dry_run_and_batch_bounds(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            cutoff = date(2020, 10, 30)
+            result = a.full_backfill(directory, cutoff, lambda *_: [], 50, dry_run=True,
+                                     checkpoint=lambda: self.fail('Dry run published'))
+            self.assertEqual(result['completedPartitions'], 50)
+            self.assertEqual(list(directory.iterdir()), [])
+            a.full_backfill(directory, cutoff, lambda *_: [], 100)
+            self.assertEqual(a.missing_jobs(a.load(directory), cutoff), [])
+            for size in (0, 12, 49, 101):
+                with self.assertRaises(a.CollectionError):
+                    a.full_backfill(directory, cutoff, lambda *_: [], size)
+
+    def test_pacing_and_per_execution_request_budget(self):
+        clock, pauses, calls = [0.0], [], []
+        def sleep(seconds):
+            pauses.append(seconds)
+            clock[0] += seconds
+        def fetch(*args):
+            calls.append(args)
+            return 0, []
+        pages = a.PacedPages(fetch, lambda: clock[0], sleep)
+        with patch.object(a, 'MAX_PAGE_CALLS', 2):
+            pages('not-a-key', '11170', '202001', 1)
+            pages('not-a-key', '11170', '202002', 1)
+            with self.assertRaises(a.CollectionError):
+                pages('not-a-key', '11170', '202003', 1)
+        self.assertEqual(pauses, [a.MIN_REQUEST_INTERVAL])
+        self.assertEqual(len(calls), 2)
+
+    def test_real_checkpoint_git_publication_and_concurrent_writer_lease(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            remote, checkout = root/'remote.git', root/'checkout'
+            def git(*args, cwd=root):
+                return subprocess.check_output(['git', *args], cwd=cwd, stderr=subprocess.STDOUT).decode().strip()
+            git('init', '--bare', str(remote))
+            git('init', str(checkout))
+            git('config', 'user.name', 'Archive Test', cwd=checkout)
+            git('config', 'user.email', 'archive-test@example.invalid', cwd=checkout)
+            git('remote', 'add', 'origin', str(remote), cwd=checkout)
+            (checkout/'source.txt').write_text('must not be published')
+            git('add', '.', cwd=checkout)
+            git('commit', '-m', 'source', cwd=checkout)
+            directory = checkout/'archive'
+            a.collect(directory, date(2020, 1, 30), lambda *_: [], jobs=[('11170', '202001')])
+            first = a.publish_checkpoint(directory, '')
+            a.collect(directory, date(2020, 1, 30), lambda *_: [], jobs=[('11680', '202001')])
+            second = a.publish_checkpoint(directory, first)
+            self.assertNotEqual(first, second)
+            self.assertEqual(git('rev-parse', 'refs/heads/transaction-archive', cwd=remote), second)
+            files = git('ls-tree', '-r', '--name-only', second, cwd=remote).splitlines()
+            self.assertTrue(all(p.startswith('archive/') for p in files))
+            self.assertEqual(git('rev-list', '--count', second, cwd=remote), '1')
+            # An old lease cannot overwrite a newer remote checkpoint.
+            a.collect(directory, date(2020, 1, 30), lambda *_: [], jobs=[('11710', '202001')])
+            with self.assertRaises(a.CollectionError):
+                a.publish_checkpoint(directory, first)
+            self.assertEqual(git('rev-parse', 'refs/heads/transaction-archive', cwd=remote), second)
+
+    def test_load_rejects_existing_oversize_archive_before_resume(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            a.collect(directory, date(2020, 1, 30), lambda *_: [], jobs=[('11170', '202001')])
+            for limit in ('MAX_PARTITION', 'MAX_ARCHIVE'):
+                with patch.object(a, limit, 1), self.assertRaises(a.CollectionError):
+                    a.load(directory)
