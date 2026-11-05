@@ -1427,8 +1427,8 @@
       "label": "잠실엘스",
       "region": "잠실",
       "role": "goal",
-      "tier": "extended",
-      "status": "watch",
+      "tier": "core",
+      "status": "active",
       "focus": "59",
       "profiles": [
         {
@@ -1683,8 +1683,8 @@
       "label": "도곡렉슬",
       "region": "개포·도곡",
       "role": "goal",
-      "tier": "extended",
-      "status": "watch",
+      "tier": "core",
+      "status": "active",
       "focus": "59",
       "profiles": [
         {
@@ -1959,8 +1959,8 @@
       "label": "디에이치자이개포",
       "region": "개포·도곡",
       "role": "goal",
-      "tier": "extended",
-      "status": "watch",
+      "tier": "core",
+      "status": "active",
       "focus": "84",
       "profiles": [
         {
@@ -2075,8 +2075,8 @@
       "label": "래미안대치팰리스",
       "region": "개포·도곡",
       "role": "goal",
-      "tier": "extended",
-      "status": "watch",
+      "tier": "core",
+      "status": "active",
       "focus": "84",
       "profiles": [
         {
@@ -2205,8 +2205,8 @@
       "label": "개포 루체하임",
       "region": "개포·도곡",
       "role": "goal",
-      "tier": "extended",
-      "status": "watch",
+      "tier": "core",
+      "status": "active",
       "focus": "59",
       "profiles": [
         {
@@ -2330,8 +2330,8 @@
       "label": "이촌 한가람",
       "region": "이촌",
       "role": "goal",
-      "tier": "extended",
-      "status": "watch",
+      "tier": "core",
+      "status": "active",
       "focus": "59",
       "profiles": [
         {
@@ -3760,17 +3760,18 @@
       "label": "잠원 목표 후보",
       "region": "잠원",
       "role": "goal",
-      "tier": "extended",
-      "status": "watch",
+      "tier": "archived",
+      "status": "archived",
       "profiles": [],
       "focus": null,
       "fields": {},
       "typeVerification": "확인 필요",
-      "note": "단지 미정·기존 목표 지역 유지",
+      "note": "기존 미정 항목 보관 · 흑석 제외 및 잠원/옥수 구체 단지 등록 2026-11-05",
       "rail": "확인 필요",
       "redevelopment": "확인 필요",
       "permit": "매수 시점 확인 필요",
-      "residency": "확인 필요"
+      "residency": "확인 필요",
+      "retired": true
     },
     {
       "id": "cfc2bf4d315bf",
@@ -3778,17 +3779,18 @@
       "label": "옥수 목표 후보",
       "region": "옥수",
       "role": "goal",
-      "tier": "extended",
-      "status": "watch",
+      "tier": "archived",
+      "status": "archived",
       "profiles": [],
       "focus": null,
       "fields": {},
       "typeVerification": "확인 필요",
-      "note": "단지·면적 미정·확인 필요",
+      "note": "기존 미정 항목 보관 · 흑석 제외 및 잠원/옥수 구체 단지 등록 2026-11-05",
       "rail": "확인 필요",
       "redevelopment": "확인 필요",
       "permit": "매수 시점 확인 필요",
-      "residency": "확인 필요"
+      "residency": "확인 필요",
+      "retired": true
     },
     {
       "id": "c55c9704d10e1",
@@ -3796,17 +3798,18 @@
       "label": "흑석 목표 후보",
       "region": "흑석",
       "role": "goal",
-      "tier": "extended",
-      "status": "watch",
+      "tier": "archived",
+      "status": "archived",
       "profiles": [],
       "focus": null,
       "fields": {},
       "typeVerification": "확인 필요",
-      "note": "단지·면적 미정·확인 필요",
+      "note": "기존 미정 항목 보관 · 흑석 제외 및 잠원/옥수 구체 단지 등록 2026-11-05",
       "rail": "확인 필요",
       "redevelopment": "확인 필요",
       "permit": "매수 시점 확인 필요",
-      "residency": "확인 필요"
+      "residency": "확인 필요",
+      "retired": true
     },
     {
       "id": "c7e90afae6417",
@@ -3888,6 +3891,358 @@
           "url": "https://www.k-apt.go.kr/cmmn/introMmentPop.do?bjdCode=41&searchOccuDate=202609&upYn=Y",
           "observedAt": "2026-10-31"
         }
+      ]
+    },
+    {
+      "id": "c5ce507c711b6",
+      "code": "11650",
+      "n": "아크로리버뷰신반포",
+      "label": "아크로리버뷰신반포",
+      "region": "잠원",
+      "role": "goal",
+      "tier": "core",
+      "status": "active",
+      "focus": "78",
+      "profiles": [
+        {
+          "id": "78",
+          "label": "78㎡급",
+          "lo": 78,
+          "hi": 79,
+          "exactAreas": []
+        },
+        {
+          "id": "84",
+          "label": "84㎡급",
+          "lo": 84,
+          "hi": 85,
+          "exactAreas": []
+        }
+      ],
+      "naverId": null,
+      "kbId": null,
+      "kbValues": [],
+      "kbDate": null,
+      "fields": {
+        "준공년월일": null,
+        "총세대수": null,
+        "세대당주차대수비율": null,
+        "용적률내용": null,
+        "건폐율내용": null,
+        "주상복합여부": null,
+        "신주소": "서울특별시 서초구 잠원동"
+      },
+      "typeVerification": "국토부 원자료 재검증 예정 · 수집 성공 전 가격 미표시",
+      "rail": "역·단지 출입구까지 실제 보행 경로 확인 필요",
+      "redevelopment": "확인 필요",
+      "strength": "지역 대표 비교 대상으로 편집 선정 · 객관적인 대장 순위는 아님",
+      "weakness": "면적·층·조망·거래량·예산 적합성 별도 비교",
+      "permit": "매수 시점 지정 여부·필지·허가 조건 확인 필요",
+      "residency": "입주 가능일·실거주 및 세금 요건은 매수 시점 별도 확인",
+      "officialSources": [
+        {
+          "title": "단지 식별 참고 · 가격/면적은 국토부 API 별도 검증",
+          "url": "https://www.acro.co.kr/MPosm_main.action?commonMap.CD_BIZ_LND=010020",
+          "checkedAt": "2026-11-05"
+        }
+      ]
+    },
+    {
+      "id": "ca11917825c49",
+      "code": "11650",
+      "n": "래미안신반포팰리스",
+      "label": "래미안신반포팰리스",
+      "region": "잠원",
+      "role": "goal",
+      "tier": "core",
+      "status": "active",
+      "focus": "59",
+      "profiles": [
+        {
+          "id": "59",
+          "label": "59㎡급",
+          "lo": 59,
+          "hi": 60,
+          "exactAreas": []
+        },
+        {
+          "id": "84",
+          "label": "84㎡급",
+          "lo": 84,
+          "hi": 85,
+          "exactAreas": []
+        }
+      ],
+      "naverId": null,
+      "kbId": null,
+      "kbValues": [],
+      "kbDate": null,
+      "fields": {
+        "준공년월일": null,
+        "총세대수": null,
+        "세대당주차대수비율": null,
+        "용적률내용": null,
+        "건폐율내용": null,
+        "주상복합여부": null,
+        "신주소": "서울특별시 서초구 잠원동"
+      },
+      "typeVerification": "국토부 원자료 재검증 예정 · 수집 성공 전 가격 미표시",
+      "rail": "역·단지 출입구까지 실제 보행 경로 확인 필요",
+      "redevelopment": "확인 필요",
+      "strength": "지역 대표 비교 대상으로 편집 선정 · 객관적인 대장 순위는 아님",
+      "weakness": "면적·층·조망·거래량·예산 적합성 별도 비교",
+      "permit": "매수 시점 지정 여부·필지·허가 조건 확인 필요",
+      "residency": "입주 가능일·실거주 및 세금 요건은 매수 시점 별도 확인",
+      "officialSources": [
+        {
+          "title": "단지 식별 참고 · 가격/면적은 국토부 API 별도 검증",
+          "url": "https://www.raemian.co.kr/",
+          "checkedAt": "2026-11-05"
+        }
+      ]
+    },
+    {
+      "id": "cb9b73bdbf176",
+      "code": "11200",
+      "n": "래미안 옥수 리버젠",
+      "label": "래미안옥수리버젠",
+      "region": "옥수",
+      "role": "goal",
+      "tier": "core",
+      "status": "active",
+      "focus": "84",
+      "profiles": [
+        {
+          "id": "59",
+          "label": "59㎡급",
+          "lo": 59,
+          "hi": 60,
+          "exactAreas": []
+        },
+        {
+          "id": "84",
+          "label": "84㎡급",
+          "lo": 84,
+          "hi": 85,
+          "exactAreas": []
+        }
+      ],
+      "naverId": null,
+      "kbId": null,
+      "kbValues": [],
+      "kbDate": null,
+      "fields": {
+        "준공년월일": null,
+        "총세대수": null,
+        "세대당주차대수비율": null,
+        "용적률내용": null,
+        "건폐율내용": null,
+        "주상복합여부": null,
+        "신주소": "서울특별시 성동구 옥수동"
+      },
+      "typeVerification": "국토부 원자료 재검증 예정 · 수집 성공 전 가격 미표시",
+      "rail": "역·단지 출입구까지 실제 보행 경로 확인 필요",
+      "redevelopment": "확인 필요",
+      "strength": "지역 대표 비교 대상으로 편집 선정 · 객관적인 대장 순위는 아님",
+      "weakness": "면적·층·조망·거래량·예산 적합성 별도 비교",
+      "permit": "매수 시점 지정 여부·필지·허가 조건 확인 필요",
+      "residency": "입주 가능일·실거주 및 세금 요건은 매수 시점 별도 확인",
+      "officialSources": [
+        {
+          "title": "단지 식별 참고 · 가격/면적은 국토부 API 별도 검증",
+          "url": "https://raemian.co.kr/sales/oksu",
+          "checkedAt": "2026-11-05"
+        }
+      ]
+    },
+    {
+      "id": "cb516cd221ce3",
+      "code": "11200",
+      "n": "e편한세상옥수파크힐스",
+      "label": "e편한세상옥수파크힐스",
+      "region": "옥수",
+      "role": "goal",
+      "tier": "core",
+      "status": "active",
+      "focus": "84",
+      "profiles": [
+        {
+          "id": "59",
+          "label": "59㎡급",
+          "lo": 59,
+          "hi": 60,
+          "exactAreas": []
+        },
+        {
+          "id": "84",
+          "label": "84㎡급",
+          "lo": 84,
+          "hi": 85,
+          "exactAreas": []
+        }
+      ],
+      "naverId": null,
+      "kbId": null,
+      "kbValues": [],
+      "kbDate": null,
+      "fields": {
+        "준공년월일": null,
+        "총세대수": null,
+        "세대당주차대수비율": null,
+        "용적률내용": null,
+        "건폐율내용": null,
+        "주상복합여부": null,
+        "신주소": "서울특별시 성동구 옥수동"
+      },
+      "typeVerification": "국토부 원자료 재검증 예정 · 수집 성공 전 가격 미표시",
+      "rail": "역·단지 출입구까지 실제 보행 경로 확인 필요",
+      "redevelopment": "확인 필요",
+      "strength": "지역 대표 비교 대상으로 편집 선정 · 객관적인 대장 순위는 아님",
+      "weakness": "면적·층·조망·거래량·예산 적합성 별도 비교",
+      "permit": "매수 시점 지정 여부·필지·허가 조건 확인 필요",
+      "residency": "입주 가능일·실거주 및 세금 요건은 매수 시점 별도 확인",
+      "officialSources": [
+        {
+          "title": "단지 식별 참고 · 가격/면적은 국토부 API 별도 검증",
+          "url": "https://www.elife.co.kr/",
+          "checkedAt": "2026-11-05"
+        }
+      ]
+    },
+    {
+      "id": "c410da1c0bbc7",
+      "code": "11170",
+      "n": "LG한강자이",
+      "label": "LG한강자이 · 대형 비교",
+      "region": "이촌",
+      "role": "goal",
+      "tier": "core",
+      "status": "active",
+      "focus": "133",
+      "profiles": [
+        {
+          "id": "66",
+          "label": "66㎡급",
+          "lo": 66,
+          "hi": 67,
+          "exactAreas": [
+            66.39
+          ]
+        },
+        {
+          "id": "133",
+          "label": "133㎡급",
+          "lo": 133,
+          "hi": 134,
+          "exactAreas": [
+            133.78,
+            133.79
+          ]
+        },
+        {
+          "id": "134",
+          "label": "134㎡급",
+          "lo": 134,
+          "hi": 135,
+          "exactAreas": [
+            134.45,
+            134.72,
+            134.82
+          ]
+        }
+      ],
+      "naverId": null,
+      "kbId": null,
+      "kbValues": [],
+      "kbDate": null,
+      "fields": {
+        "준공년월일": null,
+        "총세대수": null,
+        "세대당주차대수비율": null,
+        "용적률내용": null,
+        "건폐율내용": null,
+        "주상복합여부": null,
+        "신주소": "서울특별시 용산구 이촌동"
+      },
+      "typeVerification": "국토부 보존 원자료 실제 면적 검증 · 2026-11-05",
+      "rail": "역·단지 출입구까지 실제 보행 경로 확인 필요",
+      "redevelopment": "확인 필요",
+      "strength": "지역 대표 비교 대상으로 편집 선정 · 객관적인 대장 순위는 아님",
+      "weakness": "면적·층·조망·거래량·예산 적합성 별도 비교 · 대형 면적 비교용",
+      "permit": "매수 시점 지정 여부·필지·허가 조건 확인 필요",
+      "residency": "입주 가능일·실거주 및 세금 요건은 매수 시점 별도 확인",
+      "officialSources": [
+        {
+          "title": "단지 식별 참고 · 가격/면적은 국토부 API 별도 검증",
+          "url": "https://github.com/YHCha/my-budongsan-app/tree/transaction-archive/archive/11170",
+          "checkedAt": "2026-11-05"
+        }
+      ],
+      "apiLocations": [
+        [
+          "이촌동",
+          "430",
+          "2003",
+          "11170-156"
+        ]
+      ]
+    },
+    {
+      "id": "cece4b9914791",
+      "code": "11170",
+      "n": "래미안첼리투스",
+      "label": "래미안첼리투스 · 대형 비교",
+      "region": "이촌",
+      "role": "goal",
+      "tier": "extended",
+      "status": "watch",
+      "focus": "124",
+      "profiles": [
+        {
+          "id": "124",
+          "label": "124㎡급",
+          "lo": 124,
+          "hi": 125,
+          "exactAreas": [
+            124.02,
+            124.35
+          ]
+        }
+      ],
+      "naverId": null,
+      "kbId": null,
+      "kbValues": [],
+      "kbDate": null,
+      "fields": {
+        "준공년월일": null,
+        "총세대수": null,
+        "세대당주차대수비율": null,
+        "용적률내용": null,
+        "건폐율내용": null,
+        "주상복합여부": null,
+        "신주소": "서울특별시 용산구 이촌동"
+      },
+      "typeVerification": "국토부 보존 원자료 실제 면적 검증 · 2026-11-05",
+      "rail": "역·단지 출입구까지 실제 보행 경로 확인 필요",
+      "redevelopment": "확인 필요",
+      "strength": "지역 대표 비교 대상으로 편집 선정 · 객관적인 대장 순위는 아님",
+      "weakness": "면적·층·조망·거래량·예산 적합성 별도 비교 · 대형 면적 비교용",
+      "permit": "매수 시점 지정 여부·필지·허가 조건 확인 필요",
+      "residency": "입주 가능일·실거주 및 세금 요건은 매수 시점 별도 확인",
+      "officialSources": [
+        {
+          "title": "단지 식별 참고 · 가격/면적은 국토부 API 별도 검증",
+          "url": "https://raemian.co.kr/sales/sub/ichon/?menuSeq=1645",
+          "checkedAt": "2026-11-05"
+        }
+      ],
+      "apiLocations": [
+        [
+          "이촌동",
+          "436",
+          "2015",
+          "11170-3048"
+        ]
       ]
     }
   ],
