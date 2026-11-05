@@ -64,7 +64,7 @@ def build(directory, data_dir, archive_commit=''):
         p=next(p for p in candidate['profiles'] if p['id']==candidate['focus'])
         if not any(r['지역코드']==candidate['code'] and r['단지명']==candidate['n']
                    and p['lo']<=float(r['전용면적'])<p['hi'] and not cancelled(r) for r in rows):
-            raise CollectionError('Missing verified core complex/area')
+            raise CollectionError(f"Missing verified core complex/area: {candidate['code']} {candidate['n']} {candidate['focus']}sqm")
     data = json.dumps(bundle,ensure_ascii=False,separators=(',',':')).encode()
     if len(data)>MAX_FEED: raise CollectionError('Analysis feed size budget exceeded')
     output = data_dir/'analysis.json'
@@ -80,6 +80,9 @@ if __name__ == '__main__':
     try:
         result=build(args.archive_dir,args.data_dir,args.archive_commit)
         print(f"Analysis feed verified: {result['rawRows']} raw / {result['includedRows']} valid")
+    except CollectionError as error:
+        print(f'Analysis feed validation failed: {error}; retaining previous publication.')
+        raise SystemExit(1) from None
     except Exception:
         print('Analysis feed build failed; do not publish either Site bundle.')
         raise SystemExit(1) from None
