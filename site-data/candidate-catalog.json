@@ -772,6 +772,75 @@
       ]
     },
     {
+      "id": "c846158093992",
+      "code": "41135",
+      "n": "산운마을12단지판교센트럴포레와이시티",
+      "label": "산운12 판교센트럴포레",
+      "region": "분당·판교",
+      "role": "first",
+      "tier": "core",
+      "status": "active",
+      "focus": "55",
+      "profiles": [
+        {
+          "id": "55",
+          "label": "55㎡급",
+          "lo": 55,
+          "hi": 56,
+          "exactAreas": [
+            55.36,
+            55.42,
+            55.44
+          ]
+        },
+        {
+          "id": "59",
+          "label": "59㎡급",
+          "lo": 59,
+          "hi": 60,
+          "exactAreas": [
+            59.84,
+            59.9
+          ]
+        }
+      ],
+      "naverId": null,
+      "kbId": null,
+      "kbValues": [],
+      "kbDate": null,
+      "fields": {
+        "준공년월일": null,
+        "총세대수": null,
+        "세대당주차대수비율": null,
+        "용적률내용": null,
+        "건폐율내용": null,
+        "주상복합여부": null,
+        "신주소": "경기도 성남시 분당구 운중동 921"
+      },
+      "apiLocations": [
+        [
+          "운중동",
+          "921",
+          "2009",
+          "41135-457"
+        ]
+      ],
+      "typeVerification": "국토부 상세 API 보존 원자료에서 55.36/55.42/55.44㎡ 및 59.84/59.90㎡ 확인 · 2026-10-31 수집분 재검증 2026-11-05",
+      "propertySource": {
+        "label": "국토부 상세 API 원자료 · 단지명/면적/지번/건축연도",
+        "checkedAt": "2026-11-05",
+        "url": "https://github.com/YHCha/my-budongsan-app/tree/transaction-archive/archive/41135"
+      },
+      "buildYear": 2009,
+      "rail": "현재 역까지의 실동선 확인 필요 · 미래 철도는 별도 검증",
+      "redevelopment": "확인 필요",
+      "strength": "검토 관점: 산운11 51㎡와 함께 55㎡의 면적·방 구조, 같은 층대 가격 차이를 비교",
+      "weakness": "확인 필요: 타입별 방 크기, 저층의 실제 층·채광·조망·소음, 향후 매도 여건",
+      "permit": "매수 시점 지정 여부·필지·허가 조건 확인 필요",
+      "residency": "매물 광고상 즉시입주와 실제 입주 가능일·거주의무는 별도 확인",
+      "officialSources": []
+    },
+    {
       "id": "cadd697c8c7ca",
       "code": "41135",
       "n": "이매촌(한신)",
@@ -3862,7 +3931,7 @@
     ],
     "2025": [
       26.47,
-      11.0,
+      11,
       10.26,
       9.9
     ],
