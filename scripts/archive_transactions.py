@@ -12,7 +12,8 @@ import time
 from update_site_transactions import CollectionError, KST, fetch_month, fetch_page, months, normalize, norm
 
 LEGACY_REGIONS = ('11170', '11680', '11710', '41131', '41135', '41597')
-REGIONS = ('11170', '11680', '11710', '41131', '41133', '41135', '41597')
+PRE_SUJI_REGIONS = ('11170', '11680', '11710', '41131', '41133', '41135', '41597')
+REGIONS = tuple(sorted((*PRE_SUJI_REGIONS, '41465')))
 START = '2020-01'
 MAX_PARTITION = 8 * 1024 * 1024
 MAX_ARCHIVE = 200 * 1024 * 1024
@@ -85,12 +86,12 @@ def load(directory):
             raise CollectionError('Archive manifest missing')
         return {'schemaVersion': 1, 'startMonth': START, 'regions': list(REGIONS), 'partitions': {}}
     manifest = json.loads(path.read_text(encoding='utf-8'))
+    supported_regions = (LEGACY_REGIONS, PRE_SUJI_REGIONS, REGIONS)
     if (manifest.get('schemaVersion') != 1
             or manifest.get('startMonth') != START
-            or manifest.get('regions') not in (list(REGIONS), list(LEGACY_REGIONS))):
+            or manifest.get('regions') not in [list(regions) for regions in supported_regions]):
         raise CollectionError('Unsupported archive manifest')
-    # Explicit additive migration: keep all six existing regions and their checksums.
-    # New district partitions enter the normal bounded missing-month backfill.
+    # Keep old region partitions and checksums. Missing Suji months enter the backfill.
     manifest['regions'] = list(REGIONS)
     expected = set()
     for key, entry in manifest['partitions'].items():

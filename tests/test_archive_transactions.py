@@ -34,8 +34,9 @@ class ArchiveTests(unittest.TestCase):
 
     def test_planner_backfill_recent_and_oldest_audit(self):
         jobs = a.plan({}, date(2026, 10, 30))
-        self.assertEqual(len(jobs), 54)
+        self.assertEqual(len(jobs), 60)
         self.assertIn(('41133', '202610'), jobs)
+        self.assertIn(('41465', '202610'), jobs)
         self.assertIn(('11170', '202001'), jobs)
         self.assertIn(('41597', '202610'), jobs)
         entries = {'11170/202001': {'checkedAt': '2020-01-01'}}
@@ -77,18 +78,22 @@ class ArchiveTests(unittest.TestCase):
                 a.collect(Path(tmp), date(2026, 10, 30), fetch)
             self.assertEqual(list(Path(tmp).iterdir()), [])
 
-    def test_six_region_manifest_migrates_without_losing_partitions(self):
+    def test_older_manifests_migrate_without_losing_partitions(self):
         with tempfile.TemporaryDirectory() as tmp, patch.object(a, 'plan', return_value=[('11170', '202001')]):
             directory = Path(tmp)
             a.collect(directory, date(2026, 10, 30), lambda *_: [self.item()])
             path = directory/'manifest.json'
             manifest = json.loads(path.read_text())
             entries = manifest['partitions'].copy()
-            manifest['regions'] = list(a.LEGACY_REGIONS)
-            path.write_bytes(a.encoded(manifest))
-            migrated = a.load(directory)
-            self.assertEqual(migrated['regions'], list(a.REGIONS))
-            self.assertEqual(migrated['partitions'], entries)
+            for regions in (a.LEGACY_REGIONS, a.PRE_SUJI_REGIONS):
+                with self.subTest(regions=regions):
+                    manifest['regions'] = list(regions)
+                    path.write_bytes(a.encoded(manifest))
+                    migrated = a.load(directory)
+                    self.assertEqual(migrated['regions'], list(a.REGIONS))
+                    self.assertEqual(migrated['partitions'], entries)
+                    self.assertIn(('41465', '202001'),
+                                  a.missing_jobs(migrated, date(2026, 10, 30)))
 
     def test_landers_targets_are_in_jungwon_not_sujeong(self):
         from update_site_transactions import EXTRA_TARGETS
@@ -123,7 +128,7 @@ class ArchiveTests(unittest.TestCase):
     def historic_item(self, code, month):
         return self.item(sggCd=code, dealYear=month[:4], dealMonth=str(int(month[4:])))
 
-    def test_full_backfill_496_missing_in_sequential_75_partition_checkpoints(self):
+    def test_full_backfill_all_missing_in_sequential_75_partition_checkpoints(self):
         cutoff = date(2026, 10, 30)
         with tempfile.TemporaryDirectory() as tmp:
             directory = Path(tmp)
@@ -139,9 +144,9 @@ class ArchiveTests(unittest.TestCase):
             def checkpoint():
                 checkpoints.append(a.load(directory)['completedPartitions'])
             result = a.full_backfill(directory, cutoff, collect, checkpoint=checkpoint)
-            self.assertEqual(checkpoints, [153, 228, 303, 378, 453, 528, 574])
+            self.assertEqual(checkpoints, [153, 228, 303, 378, 453, 528, 603, 656])
             self.assertEqual(calls, all_jobs[78:])
-            self.assertEqual(len(calls), 496)
+            self.assertEqual(len(calls), 578)
             self.assertTrue(result['backfillComplete'])
             for key, entry in old.items():
                 self.assertEqual(result['partitions'][key], entry)
@@ -153,7 +158,7 @@ class ArchiveTests(unittest.TestCase):
             a.full_backfill(directory, cutoff, forbidden, checkpoint=forbidden)
 
     def test_full_backfill_resumes_from_last_published_batch_after_fetch_failure(self):
-        cutoff = date(2020, 10, 30)  # 70 partitions, two batches at size 50.
+        cutoff = date(2020, 10, 30)  # 80 partitions, two batches at size 50.
         with tempfile.TemporaryDirectory() as tmp:
             directory = Path(tmp)
             calls, published = [], []
@@ -174,7 +179,7 @@ class ArchiveTests(unittest.TestCase):
                 return [self.historic_item(code, month)]
             result = a.full_backfill(directory, cutoff, resume, 50, checkpoint)
             self.assertEqual(resumed, a.missing_jobs({}, cutoff)[50:])
-            self.assertEqual(published, [50, 70])
+            self.assertEqual(published, [50, 80])
             self.assertTrue(result['backfillComplete'])
 
     def test_failed_checkpoint_stops_before_any_next_batch(self):

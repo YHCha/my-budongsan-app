@@ -17,18 +17,18 @@ Both use only the existing Actions secret, never client-side credentials.
 ## Coverage and reconciliation
 
 Six original Site codes: 11170, 11680, 11710, 41131, 41135, 41597.
-Jungwon-gu 41133 is now added for 신흥역하늘채랜더스원 1/2/3단지.
-Existing six-region manifests migrate additively without discarding partitions.
+The archive also covers Jungwon-gu (41133) and Suji-gu (41465). Every archived
+district includes all apartments returned by the MOLIT apartment sales API.
+Existing six- and seven-region manifests migrate without discarding partitions.
 The legacy main.py has only five codes and is deliberately not used. The archive
 starts January 2020. Codes are held fixed for compatibility: administrative boundary
 or code changes need a separately verified migration, not guessed remapping.
 
-Every run fetches the latest six contract months for all seven districts, up to 12 missing region-months
+Every daily run fetches the latest six contract months for all eight districts, up to 12 missing region-months
 (oldest first), and up to 12 oldest checked historical partitions. A new archive
-starts with 54 region-month requests, normally at most 66 after auditing begins;
-pagination can increase API calls. Initial historical coverage takes about 39 daily
-runs at the original six-district October 2026 horizon; seven districts need about
-45 successful daily runs from empty (574 region-months at that horizon).
+starts with up to 60 region-month requests, with at most 72 when audit and
+missing-month jobs both run. Pagination can increase API calls. At the November
+2026 horizon the eight districts need 664 partitions, including 83 for Suji.
 Missing partitions remain explicitly missing,
 not zero transactions. Check completedPartitions/expectedPartitions and
 backfillComplete before claiming full historical coverage. Historical audit latency
@@ -163,7 +163,7 @@ populated merely because the pipeline has been installed.
 Offline tests cover pagination (existing suite), cancellation replacement,
 identical contracts, untracked complexes, invalid records, rolling/audit planning,
 no-write dry runs, late-fetch failure, checksum corruption and size/drop guards.
-Full-mode tests additionally cover 496 missing partitions in seven checkpoints,
+Full-mode tests additionally cover 578 missing partitions in eight checkpoints,
 failure/resume, checkpoint failure stopping further API calls, verified empty
 months, request pacing/budget, and real local Git publication/lease conflicts.
 No live API validation is possible locally without the secret; first Actions run
