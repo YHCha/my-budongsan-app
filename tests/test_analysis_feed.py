@@ -62,7 +62,7 @@ class AnalysisTests(unittest.TestCase):
         self.assertEqual(c['focus'],'72');self.assertNotIn('59',[p['id'] for p in c['profiles']])
         c=next(c for c in catalog['candidates'] if c.get('n')=='신흥역하늘채랜더스원2단지')
         self.assertIn(51.89,next(p['exactAreas'] for p in c['profiles'] if p['id']=='51'))
-        self.assertEqual(sum(bool(c.get('n')) for c in catalog['candidates']),49)
+        self.assertEqual(sum(bool(c.get('n')) for c in catalog['candidates']),53)
         self.assertEqual(sum(c['tier']=='core' and c['role']=='first' for c in catalog['candidates']),16)
 
     def test_geumbit_first_complex_has_verified_identity_and_types(self):
