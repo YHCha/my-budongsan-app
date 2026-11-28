@@ -1,0 +1,57 @@
+name: MOLIT single-request diagnostic
+on:
+  push:
+    branches: [codex/molit-single-probe-20261128]
+    paths: ['.github/workflows/molit-single-probe.yml']
+
+permissions: {}
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Check MOLIT response code
+        env:
+          MOLIT_SERVICE_KEY: ${{ secrets.MOLIT_SERVICE_KEY }}
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os
+          import re
+          from urllib.error import HTTPError
+          from urllib.parse import unquote, urlencode
+          from urllib.request import HTTPRedirectHandler, build_opener
+          from xml.etree import ElementTree as ET
+
+          class NoRedirect(HTTPRedirectHandler):
+              def redirect_request(self, req, fp, code, msg, headers, newurl):
+                  return None
+
+          key = os.environ.get("MOLIT_SERVICE_KEY", "")
+          if not key:
+              print("MOLIT_PROBE secret=missing")
+              raise SystemExit(0)
+          url = "https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev"
+          query = urlencode({
+              "serviceKey": unquote(key), "LAWD_CD": "11170",
+              "DEAL_YMD": "202501", "pageNo": 1, "numOfRows": 1000,
+          })
+          try:
+              with build_opener(NoRedirect()).open(url + "?" + query, timeout=30) as response:
+                  status, body = response.status, response.read(4_000_000)
+          except HTTPError as error:
+              status, body = error.code, error.read(4_000_000)
+          except Exception:
+              print("MOLIT_PROBE transport_failed")
+              raise SystemExit(0)
+          try:
+              root = ET.fromstring(body)
+          except ET.ParseError:
+              print(f"MOLIT_PROBE HTTP={status} XML=unavailable")
+              raise SystemExit(0)
+          values = {e.tag.rsplit("}", 1)[-1]: (e.text or "").strip() for e in root.iter()}
+          code = values.get("resultCode") or values.get("returnReasonCode") or ""
+          safe_code = code if re.fullmatch(r"[0-9]{1,4}", code) else "unavailable"
+          print(f"MOLIT_PROBE HTTP={status} CODE={safe_code}")
+          PY
